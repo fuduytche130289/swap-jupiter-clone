@@ -1,5 +1,6 @@
 'use client';
 import {useState} from "react";
+import ListCoin from "@/component/modal/listCoin";
 
 const assets = [
     {name: 'Swap', desc: 'Best Price'},
@@ -9,16 +10,28 @@ const assets = [
 ];
 export default function SwapUI() {
     const [activeTab, setActiveTab] = useState('Tab1');
+    const [isShowListCoin, setIsShowListCoin] = useState(false);
+    const [listCoin, setListCoin] = useState([]);
+
+    const closeListCoin = () => {
+        setIsShowListCoin(false);
+    };
+
+    const getCoinDetails = (coinAddress: string, coinLogoURI: string, coinSymbol: string) => {
+        console.log(coinAddress, coinLogoURI, coinSymbol);
+    }
 
     async function getListToken() {
+        setIsShowListCoin(true);
         const res = await fetch('https://token.jup.ag/strict');
-        console.log(res.json());
+        const data = await res.json();
+        setListCoin(data);
+        console.log(data);
     }
 
 
     return (
         <div>
-            <button onClick={getListToken}>Get List Token</button>
             <div
                 className="border-b-[1px] border-white/5 w-full hidden lg:flex justify-center space-x-10 bg-[#192531]">
                 {assets.map((item, index) => (
@@ -115,6 +128,7 @@ export default function SwapUI() {
                                     <div className="flex">
                                         <div className="flex justify-between items-center group/select">
                                             <button type="button"
+                                                    onClick={getListToken}
                                                     className="py-2 px-3 h-10 rounded-xl flex space-x-3 items-center bg-[#304256] dark:bg-v2-background border dark:group-hover/select:border-v2-primary/50 dark:group-hover/select:bg-[rgba(199,242,132,0.2)] dark:group-hover/select:shadow-swap-input-dark border-transparent">
                                                 <div className="rounded-full">
                                                     {/*<span className="relative"><img alt="SOL"*/}
@@ -244,6 +258,8 @@ export default function SwapUI() {
                     </div>
                 </div>
             </div>
+            {isShowListCoin &&
+                <ListCoin closeListCoin={closeListCoin} getCoinDetails={getCoinDetails} listCoin={listCoin}/>}
         </div>
     );
 }
