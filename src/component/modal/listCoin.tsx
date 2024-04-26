@@ -3,11 +3,11 @@
 import {useState} from "react";
 
 export default function ListCoin(props: any) {
-    const [activeCoin, setActiveCoin] = useState("So11111111111111111111111111111111111111112");
+    const [activeCoin, setActiveCoin] = useState("");
 
-    function setAndCloseListCoin(coinAddress: string, coinLogoURI: string, coinSymbol: string) {
+    function setAndCloseListCoin(coinAddress: string, coinLogoURI: string, coinSymbol: string,coinDecimals:number, type: string) {
         setActiveCoin(coinAddress);
-        props.getCoinDetails(coinAddress, coinLogoURI, coinSymbol);
+        props.getCoinDetails(coinAddress, coinLogoURI, coinSymbol,coinDecimals, type);
         props.closeListCoin();
     }
 
@@ -37,7 +37,7 @@ export default function ListCoin(props: any) {
                                             {props?.listCoin.map((coin: any, index: number) => (
                                                 <div className="relative">
                                                     <div key={index}
-                                                         onClick={() => setAndCloseListCoin(coin.address, coin.logoURI, coin.symbol)}
+                                                         onClick={() => setAndCloseListCoin(coin.address, coin.logoURI, coin.symbol,coin.decimals, props.type)}
                                                          className="flex items-center justify-between py-4 cursor-pointer">
                                                         <div className="flex items-center">
                                                             <div
