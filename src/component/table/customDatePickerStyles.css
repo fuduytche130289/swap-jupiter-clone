@@ -1,0 +1,11 @@
+/* CSS file */
+
+.react-daterange-picker {
+    height: 100%;
+}
+
+.react-daterange-picker__wrapper {
+    border-radius: 6px;
+    padding: 0px 24px;
+}
+

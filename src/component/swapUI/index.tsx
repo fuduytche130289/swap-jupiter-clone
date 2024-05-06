@@ -1,8 +1,9 @@
 'use client';
-import {useEffect, useState, useCallback, useRef} from "react";
+import {useEffect, useState, useCallback, useRef, useMemo} from "react";
 import ListCoin from "@/component/modal/listCoin";
 import {useWallet} from '@solana/wallet-adapter-react';
 import {VersionedTransaction, Connection} from '@solana/web3.js';
+import {Web3} from "web3";
 
 const assets = [
     {name: 'Swap', desc: 'Best Price'},
@@ -49,84 +50,60 @@ export default function SwapUI() {
     const fromAmountRef = useRef(null);
     const toAmountRef = useRef(null);
     const [quoteResponse, setQuoteResponse] = useState(null);
+
     const wallet = useWallet();
 
-    const closeListCoin = () => {
+    const closeListCoin = useCallback(() => {
         setIsShowListCoin(false);
-    };
+    }, []);
 
-    const getCoinDetails = (coinAddress: string, coinLogoURI: string, coinSymbol: string, coinDecimals: number, type: string) => {
-        console.log(coinAddress, coinLogoURI, coinSymbol);
-        if (type === 'from') {
-            setFromCoin({
-                coinAddress: coinAddress,
-                coinLogoURI: coinLogoURI,
-                coinSymbol: coinSymbol,
-                coinDecimals: coinDecimals
-            })
-        }
-        if (type === 'to') {
-            setToCoin({
-                coinAddress: coinAddress,
-                coinLogoURI: coinLogoURI,
-                coinSymbol: coinSymbol,
-                coinDecimals: coinDecimals
-            })
-        }
-    }
-
-    async function getListToken() {
+    const getListToken = useCallback(async () => {
         try {
             const res = await fetch('https://token.jup.ag/strict');
             const data = await res.json();
             setListCoin(data);
-            console.log(data);
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
-    }
+    }, []);
 
     useEffect(() => {
         if (isShowListCoin) {
-            getListToken().then(r => {
-                console.log(r)
-            });
+            getListToken();
         }
-    }, [isShowListCoin]);
+    }, [isShowListCoin, getListToken]);
 
     function openGetListCoin(type: string) {
         setIsShowListCoin(true);
         setTypeToOpenListCoin(type);
     }
 
-    const handleFromValueChange = (event: any) => {
-        getQuote(event.target.value, 'from');
-    };
-
-    const handleToValueChange = (event: any) => {
-        getQuote(event.target.value, 'to');
-    }
-
-    const fetchQuote = async (currentAmount: number, type: string, fromCoin: {
+    const fetchQuote = useMemo(() => async (currentAmount: number, type: string, fromCoin: {
         coinAddress: any;
         coinLogoURI?: string;
         coinSymbol?: string;
         coinDecimals: any;
     }, toCoin: { coinAddress: any; coinLogoURI?: string; coinSymbol?: string; coinDecimals: any; }) => {
-        const response = await fetch(
-            `https://quote-api.jup.ag/v6/quote?inputMint=${fromCoin.coinAddress}&outputMint=${toCoin.coinAddress}&amount=${currentAmount * Math.pow(10, type == 'from' ? fromCoin.coinDecimals : toCoin.coinDecimals)}&slippage=0.5&swapMode=${type == 'from' ? 'ExactIn' : 'ExactOut'}`
-        );
-        const quote = await response.json();
+        try {
+            const response = await fetch(
+                `https://quote-api.jup.ag/v6/quote?inputMint=${fromCoin.coinAddress}&outputMint=${toCoin.coinAddress}&amount=${currentAmount * Math.pow(10, type == 'from' ? fromCoin.coinDecimals : toCoin.coinDecimals)}&slippage=0.5&swapMode=${type == 'from' ? 'ExactIn' : 'ExactOut'}`
+            );
+            const quote = await response.json();
 
-        if (quote && quote.outAmount && quote.inAmount) {
-            const outAmountNumber = Number(type == 'from' ? quote.outAmount : quote.inAmount) / Math.pow(10, type == 'from' ? toCoin.coinDecimals : fromCoin.coinDecimals);
-            return {quote, outAmountNumber};
+            if (quote && quote.outAmount && quote.inAmount) {
+                const outAmountNumber = Number(type == 'from' ? quote.outAmount : quote.inAmount) / Math.pow(10, type == 'from' ? toCoin.coinDecimals : fromCoin.coinDecimals);
+                return {quote, outAmountNumber};
+            }
+            return {quote, outAmountNumber: 0};
+        } catch (error) {
+            console.error(error);
+            return {quote: null, outAmountNumber: 0};
         }
-        return {quote, outAmountNumber: 0};
-    }
+    }, []);
 
     const getQuote = useCallback(
         debounce(async (currentAmount, type) => {
+            console.log('add: ', fromCoin)
             if (isNaN(currentAmount) || currentAmount <= 0) {
                 console.error('Invalid fromAmount value:', currentAmount);
                 return;
@@ -138,6 +115,90 @@ export default function SwapUI() {
         }, 500),
         [fromCoin, toCoin]
     );
+
+    const handleFromValueChange = useCallback((event: any) => {
+        getQuote(event.target.value, 'from');
+    }, [getQuote]);
+
+    const handleToValueChange = useCallback((event: { target: { value: any; }; }) => {
+        getQuote(event.target.value, 'to');
+    }, [getQuote]);
+
+    // @ts-ignore
+    const getCoinDetails = useCallback((coinAddress: string, coinLogoURI: string, coinSymbol: string, coinDecimals: number, type: string) => {
+        if (type === 'from') {
+            setFromCoin({
+                coinAddress: coinAddress,
+                coinLogoURI: coinLogoURI,
+                coinSymbol: coinSymbol,
+                coinDecimals: coinDecimals
+            });
+            // @ts-ignore
+            getQuote(toAmountRef.current.value, 'to');
+        }
+        if (type === 'to') {
+            setToCoin({
+                coinAddress: coinAddress,
+                coinLogoURI: coinLogoURI,
+                coinSymbol: coinSymbol,
+                coinDecimals: coinDecimals
+            });
+            // @ts-ignore
+            getQuote(fromAmountRef.current.value, 'from');
+        }
+    }, [setFromCoin, setToCoin, toAmountRef, fromAmountRef, getQuote]);
+
+    async function signAndSendTransaction(event: any) {
+        console.log('wallet: ', wallet)
+        event.preventDefault();
+        if (!wallet.connected || !wallet.signTransaction) {
+            console.error(
+                'Wallet is not connected or does not support signing transactions'
+            );
+            return;
+        }
+
+        // get serialized transactions for the swap
+        const {swapTransaction} = await (
+            await fetch('https://quote-api.jup.ag/v6/swap', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    quoteResponse,
+                    userPublicKey: wallet.publicKey?.toString(),
+                    wrapAndUnwrapSol: true,
+                    // feeAccount is optional. Use if you want to charge a fee.  feeBps must have been passed in /quote API.
+                    // feeAccount: "fee_account_public_key"
+                }),
+            })
+        ).json();
+
+        try {
+            const swapTransactionBuf = Buffer.from(swapTransaction, 'base64');
+            const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+            const signedTransaction = await wallet.signTransaction(transaction);
+
+            const rawTransaction = signedTransaction.serialize();
+            const txid = await connection.sendRawTransaction(rawTransaction, {
+                skipPreflight: true,
+                maxRetries: 2,
+            });
+
+            const latestBlockHash = await connection.getLatestBlockhash();
+            await connection.confirmTransaction({
+                blockhash: latestBlockHash.blockhash,
+                lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+                signature: txid
+            }, 'confirmed');
+
+            console.log(`https://solscan.io/tx/${txid}`);
+
+        } catch (error) {
+            console.error('Error signing or sending the transaction:', error);
+        }
+    }
 
     return (
         <div>
@@ -225,7 +286,7 @@ export default function SwapUI() {
                         </div>
                     </div>
                     <div className="bg-v2-background rounded-2xl p-4 shadow-swap2-dark">
-                        <form>
+                        <form onSubmit={signAndSendTransaction}>
                             <div className="flex-col space-y-2 relative">
                                 <div className="flex justify-between"><label htmlFor="fromValue"
                                                                              className="text-xs sm:text-sm font-medium text-black/90 dark:text-white whitespace-nowrap">You're
