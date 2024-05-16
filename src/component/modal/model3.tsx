@@ -8,7 +8,7 @@ export default function Model3() {
     return (
         <div className="fixed inset-0 z-30 bg-black bg-opacity-50 flex items-center justify-center">
             <div
-                className="z-40 bg-white p-[28px] w-[520px] text-black flex flex-col gap-[24px] h-[479px] relative container1"
+                className="z-40 bg-white p-[28px] w-[520px] text-black flex flex-col gap-[24px] h-[479px] relative "
             >
                 {/*close*/}
                 <div className="absolute top-0 -right-[13%] m-[16px] cursor-pointer">

@@ -1,9 +1,22 @@
 'use client';
 import {useEffect, useState, useCallback, useRef, useMemo} from "react";
 import ListCoin from "@/component/modal/listCoin";
-import {useWallet} from '@solana/wallet-adapter-react';
-import {VersionedTransaction, Connection} from '@solana/web3.js';
-import {Web3} from "web3";
+import {useConnection, useWallet} from '@solana/wallet-adapter-react';
+import {VersionedTransaction, Connection, PublicKey} from '@solana/web3.js';
+import {useAutoConnect} from "@/component/swapUI/contexts/AutoConnectProvider";
+import NetworkSwitcher from './NetworkSwitcher';
+import dynamic from "next/dynamic";
+import useUserSOLBalanceStore from "@/component/swapUI/stores/useUserSOLBalanceStore";
+import "./style.css";
+
+require('@solana/wallet-adapter-react-ui/styles.css');
+
+import {Token} from '@solana/spl-token';
+
+const WalletMultiButtonDynamic = dynamic(
+    async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
+    {ssr: false}
+);
 
 const assets = [
     {name: 'Swap', desc: 'Best Price'},
@@ -12,9 +25,6 @@ const assets = [
     {name: 'Bridge', desc: 'Transfer assets to Solana'},
 ];
 
-const connection = new Connection(
-    'https://devnet.helius-rpc.com/?api-key=1b14eecd-82ea-423e-9d3d-e7ee46149722'
-);
 
 const debounce = (func: (currentAmount: any, type: any) => Promise<void>, wait: number | undefined) => {
     let timeout: string | number | NodeJS.Timeout | undefined;
@@ -51,7 +61,29 @@ export default function SwapUI() {
     const toAmountRef = useRef(null);
     const [quoteResponse, setQuoteResponse] = useState(null);
 
+    const {autoConnect, setAutoConnect} = useAutoConnect();
+    const [openNetworkSwitcher, setOpenNetworkSwitcher] = useState<boolean>(false);
+
     const wallet = useWallet();
+
+    const {connection} = useConnection();
+
+    const usdcMint = new PublicKey('Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr');
+
+    const {getUserSOLBalance} = useUserSOLBalanceStore()
+    const balance = useUserSOLBalanceStore((s) => s?.balance)
+    const [balanceUser, setBalanceUser] = useState<number>(0);
+
+    useEffect(() => {
+        console.log('123')
+        console.log('wallet', wallet)
+        if (wallet.publicKey) {
+            console.log(wallet.publicKey.toBase58())
+            getUserSOLBalance(wallet.publicKey, connection).then(val => {
+                setBalanceUser(val)
+            })
+        }
+    }, [wallet.publicKey, connection, getUserSOLBalance])
 
     const closeListCoin = useCallback(() => {
         setIsShowListCoin(false);
@@ -86,7 +118,7 @@ export default function SwapUI() {
     }, toCoin: { coinAddress: any; coinLogoURI?: string; coinSymbol?: string; coinDecimals: any; }) => {
         try {
             const response = await fetch(
-                `https://quote-api.jup.ag/v6/quote?inputMint=${fromCoin.coinAddress}&outputMint=${toCoin.coinAddress}&amount=${currentAmount * Math.pow(10, type == 'from' ? fromCoin.coinDecimals : toCoin.coinDecimals)}&slippage=0.5&swapMode=${type == 'from' ? 'ExactIn' : 'ExactOut'}`
+                `https://quote-api.jup.ag/v6/quote?inputMint=${fromCoin.coinAddress}&outputMint=${toCoin.coinAddress}&amount=${currentAmount * Math.pow(10, type == 'from' ? fromCoin.coinDecimals : toCoin.coinDecimals)}&swapMode=${type == 'from' ? 'ExactIn' : 'ExactOut'}&onlyDirectRoutes=false&experimentalDexes=Jupiter LO&autoSlippageCollisionUsdValue=1000`
             );
             const quote = await response.json();
 
@@ -155,6 +187,7 @@ export default function SwapUI() {
             console.error(
                 'Wallet is not connected or does not support signing transactions'
             );
+            alert('Wallet is not connected or does not support signing transactions');
             return;
         }
 
@@ -166,6 +199,9 @@ export default function SwapUI() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    asLegacyTransasction: false,
+                    dynamicComputeUnitLimit: true,
+                    prioritizationFeeLamports: "auto",
                     quoteResponse,
                     userPublicKey: wallet.publicKey?.toString(),
                     wrapAndUnwrapSol: true,
@@ -178,28 +214,81 @@ export default function SwapUI() {
         try {
             const swapTransactionBuf = Buffer.from(swapTransaction, 'base64');
             const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
-            const signedTransaction = await wallet.signTransaction(transaction);
-
-            const rawTransaction = signedTransaction.serialize();
-            const txid = await connection.sendRawTransaction(rawTransaction, {
-                skipPreflight: true,
-                maxRetries: 2,
-            });
+            const signature = await wallet.sendTransaction(transaction, connection);
 
             const latestBlockHash = await connection.getLatestBlockhash();
             await connection.confirmTransaction({
+                signature,
                 blockhash: latestBlockHash.blockhash,
                 lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-                signature: txid
-            }, 'confirmed');
+            });
 
-            console.log(`https://solscan.io/tx/${txid}`);
+            // const signedTransaction = await wallet.signTransaction(transaction);
+
+            // const rawTransaction = Buffer.from(signedTransaction.serialize());
+
+
+            // const txid = await connection.sendRawTransaction(rawTransaction, {
+            //     skipPreflight: true,
+            //     maxRetries: 2,
+            // });
+            // console.log('txid: ', txid)
+            // const latestBlockHash = await connection.getLatestBlockhash();
+            // await connection.confirmTransaction({
+            //     blockhash: latestBlockHash.blockhash,
+            //     lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+            //     signature: txid
+            // }, 'confirmed');
+            //
+            // console.log(`https://solscan.io/tx/${txid}`);
+            //cách gửi transaction
 
         } catch (error) {
             console.error('Error signing or sending the transaction:', error);
         }
     }
 
+    function swapCoinInformation() {
+        const temp = fromCoin;
+        setFromCoin(toCoin);
+        setToCoin(temp);
+    }
+
+    useEffect(() => {
+        getQuote(fromAmountRef.current.value, 'from')
+    }, [fromCoin, toCoin])
+
+    function resetForm() {
+        setFromCoin({
+            coinAddress: "So11111111111111111111111111111111111111112",
+            coinLogoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png ",
+            coinSymbol: "SOL",
+            coinDecimals: 9
+        });
+        setToCoin({
+            coinAddress: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+            coinLogoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+            coinSymbol: "USDC",
+            coinDecimals: 6
+        });
+        fromAmountRef.current.value = null;
+        toAmountRef.current.value = null;
+    }
+
+    const createTokenAndFetchMintDetails = async (connection, usdcMint) => {
+        console.log(Token)
+        // const tokenInstance = new Token(
+        //     connection,
+        //     usdcMint,
+        //     Token.ASSOCIATED_PROGRAM_ID,
+        //     Token.NATIVE_MINT
+        // );
+        //
+        // const mintDetails = await tokenInstance.getMint();
+        // console.log('Current value of USDC:', mintDetails.decimals);
+    };
+
+    createTokenAndFetchMintDetails(connection, usdcMint);
     return (
         <div>
             <div
@@ -234,13 +323,14 @@ export default function SwapUI() {
                     </div>
                 ))}
             </div>
+
             <div className="bg-[#1c2936] h-screen flex justify-center">
                 <div className="pt-10 md:pt-20 w-full max-w-md z-10">
                     <div className="flex justify-end mb-2">
                         <div className="flex flex-row w-full">
                             <div>
-                                <button
-                                    className="h-fit cursor-pointer border rounded-full p-[calc(0.5rem-1px)] text-v2-lily/80 bg-v2-background border-transparent hover:border fill-white-25 hover:border-v2-primary/50 hover:text-v2-primary focus:outline-1">
+                                <button onClick={() => resetForm()}
+                                        className="h-fit cursor-pointer border rounded-full p-[calc(0.5rem-1px)] text-v2-lily/80 bg-v2-background border-transparent hover:border fill-white-25 hover:border-v2-primary/50 hover:text-v2-primary focus:outline-1">
                                     <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
                                          xmlns="http://www.w3.org/2000/svg">
                                         <g clipPath="url(#clip0_9115_125076)">
@@ -256,33 +346,33 @@ export default function SwapUI() {
                                     </svg>
                                 </button>
                             </div>
-                            <div className="ml-auto flex flex-row space-x-1">
-                                <div>
-                                    <button
-                                        className="h-fit cursor-pointer border px-[calc(0.75rem-1px)] rounded-full text-v2-lily/80 bg-v2-background border-transparent hover:border fill-white-25 hover:border-v2-primary/50 hover:text-v2-primary focus:outline-1 flex items-center space-x-0.5 text-xs leading-none py-[5px] pl-2 pr-1">
-                                        <span><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
-                                                   xmlns="http://www.w3.org/2000/svg"><g
-                                            clipPath="url(#clip0_10794_148239)"><path
-                                            d="M10.7997 7.8H10.7156C10.4516 6.768 9.51561 6 8.39961 6C7.28361 6 6.34757 6.768 6.08361 7.8H1.19961C0.863609 7.8 0.599609 8.064 0.599609 8.4C0.599609 8.736 0.863609 9 1.19961 9H6.08361C6.34761 10.032 7.28361 10.8 8.39961 10.8C9.51561 10.8 10.4517 10.032 10.7156 9H10.7997C11.1357 9 11.3997 8.736 11.3997 8.4C11.3997 8.064 11.1357 7.8 10.7997 7.8ZM8.39965 9.6C7.73963 9.6 7.19965 9.06002 7.19965 8.4C7.19965 7.73998 7.73963 7.2 8.39965 7.2C9.05967 7.2 9.59965 7.73998 9.59965 8.4C9.59965 9.06002 9.05967 9.6 8.39965 9.6Z"
-                                            fill="currentColor"></path><path
-                                            d="M1.19961 4.19995H1.28365C1.54765 5.23195 2.48365 5.99995 3.59965 5.99995C4.71565 5.99995 5.65169 5.23195 5.91565 4.19995H10.7997C11.1357 4.19995 11.3997 3.93595 11.3997 3.59995C11.3997 3.26395 11.1357 2.99995 10.7997 2.99995H5.91565C5.65165 1.96795 4.71565 1.19995 3.59965 1.19995C2.48365 1.19995 1.54761 1.96795 1.28365 2.99995H1.19961C0.863609 2.99995 0.599609 3.26395 0.599609 3.59995C0.599609 3.93595 0.863609 4.19995 1.19961 4.19995ZM3.59961 2.39995C4.25963 2.39995 4.79961 2.93993 4.79961 3.59995C4.79961 4.25997 4.25963 4.79995 3.59961 4.79995C2.93959 4.79995 2.39961 4.25997 2.39961 3.59995C2.39961 2.93993 2.93959 2.39995 3.59961 2.39995Z"
-                                            fill="currentColor"></path></g><defs><clipPath id="clip0_10794_148239"><rect
-                                            width="12" height="12"
-                                            fill="currentColor"></rect></clipPath></defs></svg></span><span><div
-                                        className="flex gap-x-1 items-center relative"><span>Auto</span><div
-                                        className="p-0.5 px-1.5 bg-v2-primary text-[#434B10] rounded-xl font-semibold text-xxs">Beta</div></div></span>
-                                    </button>
-                                </div>
-                                <div>
-                                    <button
-                                        className="h-fit cursor-pointer border rounded-full p-[calc(0.5rem-1px)] text-v2-lily/80 bg-v2-background border-transparent hover:border fill-white-25 hover:border-v2-primary/50 hover:text-v2-primary focus:outline-1 flex items-center space-x-2">
-                                        <span className="inline-block"><svg width="12" height="12" viewBox="0 0 16 17"
-                                                                            fill="none"
-                                                                            xmlns="http://www.w3.org/2000/svg"><path
-                                            d="M6.71971 1.2926L6.41471 2.9726C6.11846 3.06573 5.83097 3.18635 5.55971 3.32761L4.14971 2.35761L2.33979 4.16753L3.31479 5.57252C3.17292 5.84439 3.05355 6.13003 2.95979 6.42753L1.27979 6.73252V9.29252L2.95979 9.59751C3.05354 9.89564 3.17729 10.18 3.31979 10.4525L2.33979 11.8575L4.14971 13.6674L5.5547 12.6974C5.82719 12.8399 6.11657 12.9587 6.4147 13.0524L6.71969 14.7324H9.27969L9.58468 13.0524C9.88218 12.9587 10.1678 12.8393 10.4397 12.6974L11.8447 13.6674L13.6546 11.8575L12.6796 10.4525C12.8208 10.1813 12.9415 9.89878 13.0346 9.60252L14.7196 9.29252V6.73252L13.0346 6.42753C12.9415 6.1319 12.8252 5.84815 12.6846 5.57753L13.6546 4.16753L11.8447 2.35761L10.4397 3.32761C10.1678 3.18574 9.88218 3.06636 9.58468 2.9726L9.27969 1.2926H6.71971ZM7.9997 4.9726C9.67842 4.9726 11.0397 6.33385 11.0397 8.0126C11.0397 9.69135 9.67846 11.0526 7.9997 11.0526C6.32095 11.0526 4.95971 9.69135 4.95971 8.0126C4.95971 6.33385 6.32095 4.9726 7.9997 4.9726Z"
-                                            fill="currentColor"></path></svg></span></button>
-                                </div>
-                            </div>
+                            {/*<div className="ml-auto flex flex-row space-x-1">*/}
+                            {/*    <div>*/}
+                            {/*        <button*/}
+                            {/*            className="h-fit cursor-pointer border px-[calc(0.75rem-1px)] rounded-full text-v2-lily/80 bg-v2-background border-transparent hover:border fill-white-25 hover:border-v2-primary/50 hover:text-v2-primary focus:outline-1 flex items-center space-x-0.5 text-xs leading-none py-[5px] pl-2 pr-1">*/}
+                            {/*            <span><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"*/}
+                            {/*                       xmlns="http://www.w3.org/2000/svg"><g*/}
+                            {/*                clipPath="url(#clip0_10794_148239)"><path*/}
+                            {/*                d="M10.7997 7.8H10.7156C10.4516 6.768 9.51561 6 8.39961 6C7.28361 6 6.34757 6.768 6.08361 7.8H1.19961C0.863609 7.8 0.599609 8.064 0.599609 8.4C0.599609 8.736 0.863609 9 1.19961 9H6.08361C6.34761 10.032 7.28361 10.8 8.39961 10.8C9.51561 10.8 10.4517 10.032 10.7156 9H10.7997C11.1357 9 11.3997 8.736 11.3997 8.4C11.3997 8.064 11.1357 7.8 10.7997 7.8ZM8.39965 9.6C7.73963 9.6 7.19965 9.06002 7.19965 8.4C7.19965 7.73998 7.73963 7.2 8.39965 7.2C9.05967 7.2 9.59965 7.73998 9.59965 8.4C9.59965 9.06002 9.05967 9.6 8.39965 9.6Z"*/}
+                            {/*                fill="currentColor"></path><path*/}
+                            {/*                d="M1.19961 4.19995H1.28365C1.54765 5.23195 2.48365 5.99995 3.59965 5.99995C4.71565 5.99995 5.65169 5.23195 5.91565 4.19995H10.7997C11.1357 4.19995 11.3997 3.93595 11.3997 3.59995C11.3997 3.26395 11.1357 2.99995 10.7997 2.99995H5.91565C5.65165 1.96795 4.71565 1.19995 3.59965 1.19995C2.48365 1.19995 1.54761 1.96795 1.28365 2.99995H1.19961C0.863609 2.99995 0.599609 3.26395 0.599609 3.59995C0.599609 3.93595 0.863609 4.19995 1.19961 4.19995ZM3.59961 2.39995C4.25963 2.39995 4.79961 2.93993 4.79961 3.59995C4.79961 4.25997 4.25963 4.79995 3.59961 4.79995C2.93959 4.79995 2.39961 4.25997 2.39961 3.59995C2.39961 2.93993 2.93959 2.39995 3.59961 2.39995Z"*/}
+                            {/*                fill="currentColor"></path></g><defs><clipPath id="clip0_10794_148239"><rect*/}
+                            {/*                width="12" height="12"*/}
+                            {/*                fill="currentColor"></rect></clipPath></defs></svg></span><span><div*/}
+                            {/*            className="flex gap-x-1 items-center relative"><span>Auto</span><div*/}
+                            {/*            className="p-0.5 px-1.5 bg-v2-primary text-[#434B10] rounded-xl font-semibold text-xxs">Beta</div></div></span>*/}
+                            {/*        </button>*/}
+                            {/*    </div>*/}
+                            {/*    <div>*/}
+                            {/*        <button*/}
+                            {/*            className="h-fit cursor-pointer border rounded-full p-[calc(0.5rem-1px)] text-v2-lily/80 bg-v2-background border-transparent hover:border fill-white-25 hover:border-v2-primary/50 hover:text-v2-primary focus:outline-1 flex items-center space-x-2">*/}
+                            {/*            <span className="inline-block"><svg width="12" height="12" viewBox="0 0 16 17"*/}
+                            {/*                                                fill="none"*/}
+                            {/*                                                xmlns="http://www.w3.org/2000/svg"><path*/}
+                            {/*                d="M6.71971 1.2926L6.41471 2.9726C6.11846 3.06573 5.83097 3.18635 5.55971 3.32761L4.14971 2.35761L2.33979 4.16753L3.31479 5.57252C3.17292 5.84439 3.05355 6.13003 2.95979 6.42753L1.27979 6.73252V9.29252L2.95979 9.59751C3.05354 9.89564 3.17729 10.18 3.31979 10.4525L2.33979 11.8575L4.14971 13.6674L5.5547 12.6974C5.82719 12.8399 6.11657 12.9587 6.4147 13.0524L6.71969 14.7324H9.27969L9.58468 13.0524C9.88218 12.9587 10.1678 12.8393 10.4397 12.6974L11.8447 13.6674L13.6546 11.8575L12.6796 10.4525C12.8208 10.1813 12.9415 9.89878 13.0346 9.60252L14.7196 9.29252V6.73252L13.0346 6.42753C12.9415 6.1319 12.8252 5.84815 12.6846 5.57753L13.6546 4.16753L11.8447 2.35761L10.4397 3.32761C10.1678 3.18574 9.88218 3.06636 9.58468 2.9726L9.27969 1.2926H6.71971ZM7.9997 4.9726C9.67842 4.9726 11.0397 6.33385 11.0397 8.0126C11.0397 9.69135 9.67846 11.0526 7.9997 11.0526C6.32095 11.0526 4.95971 9.69135 4.95971 8.0126C4.95971 6.33385 6.32095 4.9726 7.9997 4.9726Z"*/}
+                            {/*                fill="currentColor"></path></svg></span></button>*/}
+                            {/*    </div>*/}
+                            {/*</div>*/}
                         </div>
                     </div>
                     <div className="bg-v2-background rounded-2xl p-4 shadow-swap2-dark">
@@ -343,12 +433,12 @@ export default function SwapUI() {
                                                        type="text"
                                                        onChange={handleFromValueChange}
                                                 />
-                                                <div className="text-xs text-[#4f5a60]">
-                                                    <div
-                                                        className="text-xs text-[#4f5a60] font-medium">
-                                                        $50.307,07
-                                                    </div>
-                                                </div>
+                                                {/*<div className="text-xs text-[#4f5a60]">*/}
+                                                {/*    <div*/}
+                                                {/*        className="text-xs text-[#4f5a60] font-medium">*/}
+                                                {/*        $50.307,07*/}
+                                                {/*    </div>*/}
+                                                {/*</div>*/}
                                             </div>
                                         </span>
                                     </div>
@@ -357,6 +447,7 @@ export default function SwapUI() {
                                     <hr className="absolute w-full border-jupiter-input-light dark:border-[rgba(25,35,45,0.35)] top-[calc(50%-1px)] -z-0"/>
                                     <div className="inline-block z-10">
                                         <button type="button"
+                                                onClick={() => swapCoinInformation()}
                                                 className="group/flip bg-[#EBEFF1] dark:bg-v2-background w-8 h-8 rounded-full cursor-pointer flex flex-col justify-center border-[3px] dark:border-[rgba(25,35,45,0.75)] dark:text-white-25 dark:hover:border-v2-primary dark:hover:shadow-swap-input-dark">
                                             <span
                                                 className="w-full text-gray-600 fill-current flex justify-center transition-none group-hover/flip:text-v2-primary/50 dark:group-hover/flip:text-v2-primary"><svg
@@ -423,12 +514,12 @@ export default function SwapUI() {
                                                        type="text"
                                                        onChange={handleToValueChange}
                                                 />
-                                                <div className="text-xs text-[#4f5a60]">
-                                                    <div
-                                                        className="text-xs text-[#4f5a60] font-medium">
-                                                        $50.307,07
-                                                    </div>
-                                                </div>
+                                                {/*<div className="text-xs text-[#4f5a60]">*/}
+                                                {/*    <div*/}
+                                                {/*        className="text-xs text-[#4f5a60] font-medium">*/}
+                                                {/*        $50.307,07*/}
+                                                {/*    </div>*/}
+                                                {/*</div>*/}
                                             </div>
                                         </span>
                                     </div>
@@ -436,17 +527,51 @@ export default function SwapUI() {
                             </div>
                             <div className="mt-3 flex gap-x-1"></div>
                             <div className="!bg-transparent css-1lpgtt2">
+
+                                <div className="w-full flex text-white">
+                                    <WalletMultiButtonDynamic
+                                        className="btn-ghost btn-sm rounded-btn text-lg mr-6"/>
+                                    {/*<div className="relative">*/}
+                                    {/*    <div tabIndex={0} className="btn btn-square btn-ghost text-right mr-4">*/}
+                                    {/*        <svg onClick={() => setOpenNetworkSwitcher(!openNetworkSwitcher)}*/}
+                                    {/*             className="w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none"*/}
+                                    {/*             viewBox="0 0 24 24" stroke="currentColor">*/}
+                                    {/*            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}*/}
+                                    {/*                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>*/}
+                                    {/*            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}*/}
+                                    {/*                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>*/}
+                                    {/*        </svg>*/}
+                                    {/*    </div>*/}
+
+                                    {/*    {*/}
+                                    {/*        openNetworkSwitcher && <div*/}
+                                    {/*            className="absolute top-[80px] right-0 bg-black min-w-[200px] p-[15px] rounded">*/}
+                                    {/*            <div className="form-control bg-opacity-100">*/}
+                                    {/*                <label className="cursor-pointer label">*/}
+                                    {/*                    <a>Autoconnect</a>*/}
+                                    {/*                    <input type="checkbox" checked={autoConnect}*/}
+                                    {/*                           onChange={(e) => setAutoConnect(e.target.checked)}*/}
+                                    {/*                           className="toggle"/>*/}
+                                    {/*                </label>*/}
+                                    {/*                <NetworkSwitcher/>*/}
+                                    {/*            </div>*/}
+                                    {/*        </div>*/}
+                                    {/*    }*/}
+                                    {/*</div>*/}
+                                    {/*Your wallet balance: {(balanceUser || 0).toLocaleString()}*/}
+                                </div>
                                 <button
                                     className="h-full w-full rounded-xl text-white group bg-none bg-[#141519] dark:bg-[#121D28] hover:bg-gradient-to-r from-[rgba(199,242,132,1))] to-[rgba(0,190,240,1)] border border-transparent dark:hover:border dark:hover:border-v2-primary disabled:cursor-not-allowed mt-3">
                                     <div
                                         className="rounded-xl bg-v2-text-gradient bg-clip-text text-transparent group-disabled:bg-none group-disabled:text-opacity-25 group-disabled:text-[#CFF3FF] py-5 text-lg font-medium leading-none">
-                                        <span>Connect Wallet</span></div>
+                                        <span>Swap</span></div>
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
+
             {isShowListCoin &&
                 <ListCoin closeListCoin={closeListCoin} type={typeToOpenListCoin} getCoinDetails={getCoinDetails}
                           listCoin={listCoin}/>}

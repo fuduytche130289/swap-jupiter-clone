@@ -7,7 +7,11 @@ import Table from "@/component/table/table";
 import Form from "@/component/form";
 import Model3 from "@/component/modal/model3";
 import TableSwap from "@/component/tableSwap";
-import FormReactHook from "@/component/form/formReactHook";
+import FormReactHook2 from "@/component/form/formReactHook2";
+import Lucky from "@/component/lucky";
+import Modal1 from "@/component/modal/modal1";
+import Modal2 from "@/component/modal/modal2";
+import FormResponsive from "@/component/form/formResponsive";
 
 export default function Tab() {
     const [activeTab, setActiveTab] = useState('Tab1');
@@ -19,7 +23,12 @@ export default function Tab() {
             </div>
             {activeTab === 'Tab1' && <div><SwapUI/></div>}
             {activeTab === 'Tab2' && <div><Swap/></div>}
-            {/*<FormReactHook/>*/}
+            {/*<Form/>*/}
+            {/*<Model3/>*/}
+
+            {/*<FormResponsive/>*/}
+            {/*<FormReactHook2/>*/}
+            {/*<Lucky/>*/}
         </div>
     );
 }

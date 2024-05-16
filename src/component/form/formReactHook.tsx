@@ -1,6 +1,7 @@
-import React from "react";
+import React, {useState} from "react";
 import {useForm, SubmitHandler} from "react-hook-form"
 import "./assets/css/style.css"
+import RadioButton from "@/component/form/component/radio";
 
 const iconArrowRight = require('./assets/img/icon_arrow_right.svg');
 const iconDownload = require('./assets/img/icon_download.svg');
@@ -16,6 +17,12 @@ export default function FormReactHook() {
         watch,
         formState: {errors},
     } = useForm<Inputs>()
+
+    const [selectedValue, setSelectedValue] = useState('');
+
+    const handleChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
+        setSelectedValue(event.target.value);
+    };
     const onSubmit: SubmitHandler<Inputs> = (data) => console.log(data)
 
     console.log(watch("example")) // watch input value by passing the name of it
@@ -43,316 +50,365 @@ export default function FormReactHook() {
                 <div className="mt-[32px] bg-white shadow-lg text-black">
                     <div className="p-[40px]">
                         <div>
-                            <p className="font-[700] text-[18px] leading-[21.48px]">사용자 상세</p>
-                            <form className="mt-[32px] flex flex-col gap-[24px]" onSubmit={handleSubmit(onSubmit)}>
-                                <div className="grid grid-cols-11">
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">회원 ID</p>
+                            <p className="font-[700] text-[18px] leading-[21.48px]">입점사 상세</p>
+                            <div className="mt-[32px] flex flex-col gap-[24px]">
+                                <div className="flex gap-[16px]">
+                                    <div className="flex justify-start items-center w-[74px]">
+                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">입점사명</p>
                                     </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            defaultValue="test" {...register("example")}
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="회원 ID 노출 영역(ex.userid@email.com)"/>
-                                    </div>
-                                    <div className="col-span-1"></div>
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">회원이름</p>
-                                    </div>
-                                    <div className="col-span-4">
+                                    <div className="w-[640px]">
                                         <input
                                             className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="회원 이름 노출 영역"/>
+                                            placeholder="입점사 판매업체명 노출"/>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-11">
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">회원 닉네임</p>
+                                <div className="flex gap-[16px]">
+                                    <div className="flex justify-start items-center w-[74px]">
+                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">입점사명</p>
                                     </div>
-                                    <div className="col-span-4">
+                                    <div className="w-[1430px]">
                                         <input
                                             className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="회원 닉네임 노출 영역"/>
-                                    </div>
-                                    <div className="col-span-1"></div>
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">회원 가입일</p>
-                                    </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="YYYY-MM-DD"/>
+                                            placeholder="카테고리1, 카테고리2, 카테고리3..."/>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-11">
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">가입구분</p>
+                                <div className="flex gap-[60px]">
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">입점사명</p>
+                                        </div>
+                                        <div className="w-[640px]">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="입점사 판매업체명 노출"/>
+                                        </div>
                                     </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="일반회원 or 소셜연동 회원"/>
-                                    </div>
-                                    <div className="col-span-1"></div>
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">최근 로그인</p>
-                                    </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="YYYY-MM-DD(HH:MM:SS) "/>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-11">
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">회원등급</p>
-                                    </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="등급명 노출"/>
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">입점사명</p>
+                                        </div>
+                                        <div className="w-[640px]">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="입점사 판매업체명 노출"/>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-11">
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">지난 3개월<br/>
-                                            누적구매금액</p>
+                                <div className="flex gap-[16px]">
+                                    <div className="flex justify-start items-start w-[74px]">
+                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">입점사명</p>
                                     </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="0,000"/>
-                                    </div>
-                                    <div className="col-span-1"></div>
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">지난 3개월<br/>
-                                            누적활동지수</p>
-                                    </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="0,000"/>
+                                    <div className="w-[1430px]">
+                                        <textarea
+                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none h-[100px]"
+                                            placeholder="텍스트 영역"/>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-11">
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">보유 적립금</p>
+                                <div className="flex gap-[16px]">
+                                    <div className="flex justify-start items-center w-[74px]">
+                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">판매 SKU</p>
                                     </div>
-                                    <div className="col-span-4">
+                                    <div className="w-[640px]">
                                         <input
                                             className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="0,000"/>
-                                    </div>
-                                    <div className="col-span-1"></div>
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">다음달<br/>
-                                            소멸 적립금</p>
-                                    </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="0,000"/>
+                                            placeholder="판매 SKU 수량"/>
                                     </div>
                                 </div>
-                            </form>
-                        </div>
-
-                        <div className="mt-[40px]">
-                            <p className="font-[700] text-[18px] leading-[21.48px]">최근 1개월 구매내역</p>
-                            <div className="mt-[16px] border border-[#ddd]">
-                                <div className="p-[28px] max-h-[338px] overflow-y-scroll">
-                                    <table className="w-full text-black ">
-                                        <thead className="text-[#999999] font-[600] text-[14px] leading-[16.71px]">
-                                        <tr className="bg-[#f9f9f9]">
-                                            <th className="py-[15px]">주문번호</th>
-                                            <th>주문일자</th>
-                                            <th>카테고리</th>
-                                            <th>입점사</th>
-                                            <th>브랜드</th>
-                                            <th>상품명</th>
-                                            <th>결제수단</th>
-                                            <th>최종판매가</th>
-                                            <th>할인</th>
-                                            <th>배송상태</th>
-                                            <th>구매상태</th>
-                                            <th>상세</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        <tr className="text-center border-b border-b-[#f0f0f0]">
-                                            <td className="py-[15px]">00000-00000</td>
-                                            <td>2024-04-20</td>
-                                            <td>대분류명</td>
-                                            <td>입점사A</td>
-                                            <td>브랜드A</td>
-                                            <td>상품명상품명상...</td>
-                                            <td>신용카드</td>
-                                            <td>0,000</td>
-                                            <td>0,000</td>
-                                            <td>배송 중</td>
-                                            <td>확정대기</td>
-                                            <td>
-                                                <button className="bg-[#f9f9f9] rounded-[6px]">
-                                                    <p className="text-[12px] font-[600] leading-[14.32px] py-[6px] px-[12px] text-[#999]">상세</p>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr className="text-center border-b border-b-[#f0f0f0]">
-                                            <td className="py-[15px]">00000-00000</td>
-                                            <td>2024-04-20</td>
-                                            <td>대분류명</td>
-                                            <td>입점사A</td>
-                                            <td>브랜드A</td>
-                                            <td>상품명상품명상...</td>
-                                            <td>신용카드</td>
-                                            <td>0,000</td>
-                                            <td>0,000</td>
-                                            <td>배송 중</td>
-                                            <td>확정대기</td>
-                                            <td>
-                                                <button className="bg-[#f9f9f9] rounded-[6px]">
-                                                    <p className="text-[12px] font-[600] leading-[14.32px] py-[6px] px-[12px] text-[#999]">상세</p>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr className="text-center border-b border-b-[#f0f0f0]">
-                                            <td className="py-[15px]">00000-00000</td>
-                                            <td>2024-04-20</td>
-                                            <td>대분류명</td>
-                                            <td>입점사A</td>
-                                            <td>브랜드A</td>
-                                            <td>상품명상품명상...</td>
-                                            <td>신용카드</td>
-                                            <td>0,000</td>
-                                            <td>0,000</td>
-                                            <td>배송 중</td>
-                                            <td>확정대기</td>
-                                            <td>
-                                                <button className="bg-[#f9f9f9] rounded-[6px]">
-                                                    <p className="text-[12px] font-[600] leading-[14.32px] py-[6px] px-[12px] text-[#999]">상세</p>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr className="text-center border-b border-b-[#f0f0f0]">
-                                            <td className="py-[15px]">00000-00000</td>
-                                            <td>2024-04-20</td>
-                                            <td>대분류명</td>
-                                            <td>입점사A</td>
-                                            <td>브랜드A</td>
-                                            <td>상품명상품명상...</td>
-                                            <td>신용카드</td>
-                                            <td>0,000</td>
-                                            <td>0,000</td>
-                                            <td>배송 중</td>
-                                            <td>확정대기</td>
-                                            <td>
-                                                <button className="bg-[#f9f9f9] rounded-[6px]">
-                                                    <p className="text-[12px] font-[600] leading-[14.32px] py-[6px] px-[12px] text-[#999]">상세</p>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr className="text-center border-b border-b-[#f0f0f0]">
-                                            <td className="py-[15px]">00000-00000</td>
-                                            <td>2024-04-20</td>
-                                            <td>대분류명</td>
-                                            <td>입점사A</td>
-                                            <td>브랜드A</td>
-                                            <td>상품명상품명상...</td>
-                                            <td>신용카드</td>
-                                            <td>0,000</td>
-                                            <td>0,000</td>
-                                            <td>배송 중</td>
-                                            <td>확정대기</td>
-                                            <td>
-                                                <button className="bg-[#f9f9f9] rounded-[6px]">
-                                                    <p className="text-[12px] font-[600] leading-[14.32px] py-[6px] px-[12px] text-[#999]">상세</p>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
+                                <div className="flex gap-[40px]">
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[20px] text-[#222]">병행수입상품
+                                                포함 여부</p>
+                                        </div>
+                                        <div className="">
+                                            <button
+                                                className=" w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none">
+                                                <p className="text-[#999] px-[35.5px] py-[17px]">미포함</p>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[20px] text-[#222]">도매 상품<br/>
+                                                보유 여부</p>
+                                        </div>
+                                        <div className="">
+                                            <button
+                                                className=" w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none">
+                                                <p className="text-[#999] px-[35.5px] py-[17px]">보유</p>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="mt-[40px]">
-                            <form className="mt-[32px] flex flex-col gap-[24px]" onSubmit={handleSubmit(onSubmit)}>
-                                <div className="grid grid-cols-11">
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">사용자 SNS</p>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <button className="bg-[#ddd] rounded-[6px]">
-                                            <p className="font-[600] text-[14px] leading-[20px] px-[29.5px] py-[14px]">바로가기</p>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-11">
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">지난 3개월<br/>
-                                            누적출석</p>
-                                    </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="00"/>
-                                    </div>
-                                    <div className="col-span-1"></div>
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">지난 3개월<br/>
-                                            누적게시글</p>
-                                    </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="0,000"/>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-11">
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">지난 3개월<br/>
-                                            누적댓글</p>
-                                    </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="0,000"/>
-                                    </div>
-                                    <div className="col-span-1"></div>
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">지난 3개월<br/>
-                                            누적상품태그</p>
-                                    </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="0,000"/>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-11">
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">사용자<br/>
-                                            제재 상태</p>
-                                    </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="정상 OR 제재"/>
-                                    </div>
-                                    <div className="col-span-1"></div>
+                        {/*line*/}
+                        <div className="h-[1px] w-full bg-[#F0F0F0] my-[40px]"></div>
+                        {/*end line*/}
 
-                                    <div className="col-span-1 flex justify-start items-center">
-                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">제재 내용</p>
+                        <div>
+                            <p className="font-[700] text-[18px] leading-[21.48px]">회사 상세</p>
+                            <div className="mt-[32px] flex flex-col gap-[24px]">
+                                <div className="flex gap-[60px]">
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">회사명</p>
+                                        </div>
+                                        <div className="w-[640px]">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="입점사 법인명(운영사)"/>
+                                        </div>
                                     </div>
-                                    <div className="col-span-4">
-                                        <input
-                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
-                                            placeholder="정상 OR 제재"/>
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">사업자<br/>
+                                                등록번호</p>
+                                        </div>
+                                        <div className="w-[640px]">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="사업자 등록번호 0000000000"/>
+                                        </div>
                                     </div>
                                 </div>
-                            </form>
+                                <div className="flex gap-[16px]">
+                                    <div className="flex justify-start items-center w-[74px]">
+                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">사업자<br/>
+                                            등록번호</p>
+                                    </div>
+                                    <div className="w-[640px]">
+                                        <input
+                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                            placeholder="사업자 등록번호 0000000000"/>
+                                    </div>
+                                </div>
+                                <div className="flex gap-[16px]">
+                                    <div className="flex justify-start items-center w-[74px]">
+                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">사업장 주소</p>
+                                    </div>
+                                    <div className="w-[1430px]">
+                                        <input
+                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                            placeholder="우편번호 / 주소 / 상세 주소"/>
+                                    </div>
+                                </div>
+                                <div className="flex gap-[60px]">
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">담당자명</p>
+                                        </div>
+                                        <div className="w-[640px]">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="입점사 브랜드 담당자"/>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">전화번호</p>
+                                        </div>
+                                        <div className="w-[640px]">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="02-0000-0000"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-[60px]">
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">휴대전화</p>
+                                        </div>
+                                        <div className="w-[640px]">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="010-0000-0000"/>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">이메일</p>
+                                        </div>
+                                        <div className="w-[640px]">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="ID@Email.com"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-[16px]">
+                                    <div className="flex justify-start items-center w-[74px]">
+                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">입점 심사<br/>
+                                            상태</p>
+                                    </div>
+                                    <div className="w-[310px]">
+                                        <input
+                                            className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                            placeholder="입점승인"/>
+                                    </div>
+                                </div>
+                                <div className="flex gap-[60px]">
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">심사
+                                                대상자</p>
+                                        </div>
+                                        <div className="w-[512px]">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="하트필드 담당자 이름"/>
+                                        </div>
+                                        <div className="col-span-1 flex justify-end">
+                                            <button className="bg-[#ddd] rounded-[6px]">
+                                                <p className="text-[#222] px-[41.5px] py-[14px] font-[600] text-[14px] leading-[20px]">변경</p>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">입점사<br/>
+                                                수수료 설정</p>
+                                        </div>
+                                        <div className="w-[512px]">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="00.00%"/>
+                                        </div>
+                                        <div className="col-span-1 flex justify-end">
+                                            <button className="bg-[#ddd] rounded-[6px]">
+                                                <p className="text-[#222] px-[41.5px] py-[14px] font-[600] text-[14px] leading-[20px]">변경</p>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
+                        {/*line*/}
+                        <div className="h-[1px] w-full bg-[#F0F0F0] my-[40px]"></div>
+                        {/*end line*/}
+
+                        <div>
+                            <p className="font-[700] text-[18px] leading-[21.48px]">파일</p>
+                            <div className="mt-[32px] flex flex-col gap-[24px]">
+                                <div className="flex gap-[60px]">
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">사업자<br/>
+                                                등록증 사본</p>
+                                        </div>
+                                        <div className="w-[640px] relative">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="파일 이름 기재 영역"/>
+                                            <img className="absolute right-4 top-4" src={iconDownload.default.src}
+                                                 alt="iconDownload"/>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">사업자<br/>
+                                                등록증 사본</p>
+                                        </div>
+                                        <div className="w-[640px] relative">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="파일 이름 기재 영역"/>
+                                            <img className="absolute right-4 top-4" src={iconDownload.default.src}
+                                                 alt="iconDownload"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-[60px]">
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">사업자<br/>
+                                                등록증 사본</p>
+                                        </div>
+                                        <div className="w-[640px] relative">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="파일 이름 기재 영역"/>
+                                            <img className="absolute right-4 top-4" src={iconDownload.default.src}
+                                                 alt="iconDownload"/>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">사업자<br/>
+                                                등록증 사본</p>
+                                        </div>
+                                        <div className="w-[640px] relative">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="파일 이름 기재 영역"/>
+                                            <img className="absolute right-4 top-4" src={iconDownload.default.src}
+                                                 alt="iconDownload"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-[60px]">
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">사업자<br/>
+                                                등록증 사본</p>
+                                        </div>
+                                        <div className="w-[640px] relative">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="파일 이름 기재 영역"/>
+                                            <img className="absolute right-4 top-4" src={iconDownload.default.src}
+                                                 alt="iconDownload"/>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-[16px]">
+                                        <div className="flex justify-start items-center w-[74px]">
+                                            <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">사업자<br/>
+                                                등록증 사본</p>
+                                        </div>
+                                        <div className="w-[640px] relative">
+                                            <input
+                                                className="text-[#999] px-[12px] py-[15.5px] w-full border border-gray-200 rounded-[6px] bg-[#F9F9F9] outline-none"
+                                                placeholder="파일 이름 기재 영역"/>
+                                            <img className="absolute right-4 top-4" src={iconDownload.default.src}
+                                                 alt="iconDownload"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {/*line*/}
+                        <div className="h-[1px] w-full bg-[#F0F0F0] my-[40px]"></div>
+                        {/*end line*/}
+                        <div>
+                            <p className="font-[700] text-[18px] leading-[21.48px]">APP 노출 설정</p>
+                            <div className="mt-[32px] flex flex-col gap-[24px]">
+                                <div className="flex gap-[16px]">
+                                    <div className="flex justify-start items-center w-[74px]">
+                                        <p className="text-[14px] font-[600] leading-[16.71px] text-[#222]">앱 노출여부</p>
+                                    </div>
+                                    <div className="flex gap-[24px]">
+                                        <div className=" relative">
+                                            <RadioButton label="노출"
+                                                         name="radio"
+                                                         value="option1"
+                                                         checked={selectedValue === 'option1'}
+                                                         onChange={handleChange}/>
+                                        </div>
+                                        <div className=" relative">
+                                            <RadioButton label="미노출"
+                                                         name="radio"
+                                                         value="option2"
+                                                         checked={selectedValue === 'option2'}
+                                                         onChange={handleChange}/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 {/*end form*/}
