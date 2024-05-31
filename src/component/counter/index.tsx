@@ -471,7 +471,7 @@ export default function Home() {
         }
     ];
     // this is contract address of this abi
-    const address = "0xCc302b6D0e5edA35e215744Aba93a999B1E9C49d";
+    const address = "0x512c504E68d2011230d63C5bB70881147A4cF85A";
     // create a new contract object, providing the ABI and address
     const [cryptoZombies, setCryptoZombies] = useState<any>(null);
     const [step1, setStep1] = useState(false);
@@ -479,6 +479,7 @@ export default function Home() {
     const [step3, setStep3] = useState(false);
     const [step4, setStep4] = useState(false);
     const [step5, setStep5] = useState(false);
+    const [indexOfZombie, setIndexOfZombie] = useState(0);
 
 
     // const account = web3.eth.accounts.privateKeyToAccount('0xec3ce0b5435bbe8428c69d7655693ba0df1330454e3d2580af3d931adc1eb5cf');
@@ -510,6 +511,7 @@ export default function Home() {
                 console.log("Successfully created a zombie!");
                 setSuccess('Successfully created a zombie!')
                 setStep4(true)
+                getZombiesByOwner()
             })
             .on("error", function (error) {
                 console.log(error);
@@ -517,7 +519,7 @@ export default function Home() {
     }
 
     function listZombie() {
-        cryptoZombies.methods.zombies(0).call().then(function (res: any) {
+        cryptoZombies.methods.zombies(indexOfZombie).call().then(function (res: any) {
             console.log(res);
             setInformationOfZombie(res)
             setStep5(true)
@@ -532,6 +534,22 @@ export default function Home() {
         setStep3(true)
     }
 
+    function getZombiesByOwner() {
+        cryptoZombies.methods.getZombiesByOwner(connectedAccount).call().then(function (res: any) {
+            console.log(res.toString().match(/\d+/)[0]);
+            setIndexOfZombie(res.toString().match(/\d+/)[0])
+        });
+    }
+
+    function attack() {
+        cryptoZombies.methods.attack(0, 1).send({from: connectedAccount, gas: 3000000})
+            .on("receipt", function (receipt) {
+                console.log("Successfully attacked!");
+            })
+            .on("error", function (error) {
+                console.log(error);
+            });
+    }
 
     // @ts-ignore
     return (
@@ -593,6 +611,10 @@ export default function Home() {
                         <Image width={16} height={16} src={iconCheck} alt='iconCheck'/>
                     </div>}
                 </div>}
+                <button className="bg-blue-500 rounded-[6px] shadow-lg shadow-gray-400 w-[25%]"
+                        onClick={() => attack()}>
+                    <p className='p-3 font-bold text-white'>Attack</p>
+                </button>
             </div>
         </div>
     );
