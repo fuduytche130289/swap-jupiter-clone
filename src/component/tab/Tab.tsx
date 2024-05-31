@@ -12,23 +12,25 @@ import Lucky from "@/component/lucky";
 import Modal1 from "@/component/modal/modal1";
 import Modal2 from "@/component/modal/modal2";
 import FormResponsive from "@/component/form/formResponsive";
+import Home from "@/component/counter";
 
 export default function Tab() {
     const [activeTab, setActiveTab] = useState('Tab1');
     return (
         <div>
-            <div className="w-full flex justify-center gap-5 m-5">
-                <button onClick={() => setActiveTab('Tab1')}>SwapUI</button>
-                <button onClick={() => setActiveTab('Tab2')}>SwapDemo</button>
-            </div>
-            {activeTab === 'Tab1' && <div><SwapUI/></div>}
-            {activeTab === 'Tab2' && <div><Swap/></div>}
+            {/*<div className="w-full flex justify-center gap-5 m-5">*/}
+            {/*    <button onClick={() => setActiveTab('Tab1')}>SwapUI</button>*/}
+            {/*    <button onClick={() => setActiveTab('Tab2')}>SwapDemo</button>*/}
+            {/*</div>*/}
+            {/*{activeTab === 'Tab1' && <div><SwapUI/></div>}*/}
+            {/*{activeTab === 'Tab2' && <div><Swap/></div>}*/}
             {/*<Form/>*/}
             {/*<Model3/>*/}
 
             {/*<FormResponsive/>*/}
             {/*<FormReactHook2/>*/}
             {/*<Lucky/>*/}
+            <Home/>
         </div>
     );
 }
